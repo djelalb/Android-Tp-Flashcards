@@ -19,8 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.tp_flashcard.ui.theme.TP_FlashcardTheme
+import com.example.tp_flashcard.viewmodel.HomeViewModel
+import androidx.activity.viewModels
 
 class MainActivity : ComponentActivity() {
+    private val homeViewModel: HomeViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -34,7 +38,7 @@ class MainActivity : ComponentActivity() {
                             .consumeWindowInsets(innerPadding)
                             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Vertical)),
                     ) {
-                        FlashcardNavHost()
+                        FlashcardNavHost(homeViewModel = homeViewModel)
                     }
                 }
             }
