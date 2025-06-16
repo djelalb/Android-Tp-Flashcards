@@ -10,22 +10,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class FlashcardViewModel : ViewModel() {
-
-    private val _uiState: MutableStateFlow<FlashcardUiState> =
-        MutableStateFlow(FlashcardUiState())
-
+    private val _uiState = MutableStateFlow(FlashcardUiState())
     val uiState: StateFlow<FlashcardUiState> = _uiState
 
     fun loadCardsForCategory(categoryId: Long) {
         viewModelScope.launch {
-            val cards: List<FlashCard> =
-                FlashcardRepository.flashcards.filter { it.categoryId == categoryId }
-
-            _uiState.value = FlashcardUiState(
-                currentIndex = 0,
-                cards = cards,
-                isSessionFinished = cards.isEmpty()
-            )
+            FlashcardRepository.getFlashcardsForCategory(categoryId)
+                .collect { cards ->
+                    _uiState.value = FlashcardUiState(
+                        currentIndex = 0,
+                        cards = cards,
+                        isSessionFinished = cards.isEmpty()
+                    )
+                }
         }
     }
 
