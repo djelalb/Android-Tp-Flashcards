@@ -1,27 +1,23 @@
 package com.example.tp_flashcard.ui.flashcard
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
-import androidx.compose.material3.*
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.ui.graphics.Color
 import com.example.tp_flashcard.viewmodel.FlashcardViewModel
-import androidx.compose.animation.with
-import androidx.compose.animation.core.Animatable
+import com.example.tp_flashcard.ui.flashcard.FlashcardUiState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -70,25 +66,25 @@ fun FlashcardScreen(
             AnimatedContent(
                 targetState = uiState.currentIndex,
                 transitionSpec = {
-                    val animSpec = tween<Int>(durationMillis = 300)
-
-                    if (initialState < targetState) {
-                        slideInHorizontally(
-                            initialOffsetX = { fullWidth -> fullWidth },
-                            animationSpec = tween(durationMillis = 300)
-                        ) with slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> -fullWidth },
-                            animationSpec = tween(durationMillis = 300)
-                        )
-                    } else {
-                        slideInHorizontally(
-                            initialOffsetX = { fullWidth -> -fullWidth },
-                            animationSpec = tween(durationMillis = 300)
-                        ) with slideOutHorizontally(
-                            targetOffsetX = { fullWidth -> fullWidth },
-                            animationSpec = tween(durationMillis = 300)
-                        )
-                    }
+                    val enter = slideInHorizontally(
+                        initialOffsetX = { fullWidth -> fullWidth },
+                        animationSpec = spring(stiffness = Spring.StiffnessLow)
+                    ) + fadeIn(
+                        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)
+                    ) + scaleIn(
+                        initialScale = 1.05f,
+                        animationSpec = tween(durationMillis = 250, easing = FastOutSlowInEasing)
+                    )
+                    val exit = slideOutHorizontally(
+                        targetOffsetX = { fullWidth -> -fullWidth },
+                        animationSpec = spring(stiffness = Spring.StiffnessLow)
+                    ) + fadeOut(
+                        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+                    ) + scaleOut(
+                        targetScale = 0.95f,
+                        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing)
+                    )
+                    enter with exit
                 }
             ) { index ->
                 if (uiState.cards.isEmpty()) {
@@ -100,12 +96,18 @@ fun FlashcardScreen(
 
                     Card(
                         modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .aspectRatio(1.2f)
+                            .fillMaxWidth(0.85f)
+                            .height(600.dp)
                             .clickable {
                                 scope.launch {
-                                    val target = if (isFront) 180f else 0f
-                                    rotation.animateTo(target, tween(400))
+                                    val target = if (rotation.value < 90f) 180f else 0f
+                                    rotation.animateTo(
+                                        target,
+                                        animationSpec = tween(
+                                            durationMillis = 400,
+                                            easing = FastOutSlowInEasing
+                                        )
+                                    )
                                 }
                             }
                             .graphicsLayer {
@@ -113,20 +115,24 @@ fun FlashcardScreen(
                                 cameraDistance = 8 * density
                             },
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isFront) Color(0xFFBBDEFB) else Color(0xFFFFF9C4)
+                            containerColor = if (isFront) Color(0xFF00796B) else Color(0xFF004D40)
                         ),
                         shape = MaterialTheme.shapes.medium,
-                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
                     ) {
                         Box(
                             Modifier
                                 .fillMaxSize()
-                                .padding(16.dp),
+                                .padding(24.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = displayText,
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                ),
                                 modifier = Modifier.graphicsLayer {
                                     if (!isFront) rotationY = 180f
                                 }
@@ -141,9 +147,7 @@ fun FlashcardScreen(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Button(onClick = onBack) {
-                Text("Retour")
-            }
+            Button(onClick = onBack) { Text("Retour") }
             val isLast = uiState.currentIndex >= uiState.cards.lastIndex
             Button(
                 onClick = {
